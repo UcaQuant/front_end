@@ -1,38 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminLayout from "./components/layout/AdminLayout";
+
+import LoginPage from "./pages/admin/LoginPage";
+import ForbiddenPage from "./pages/ForbiddenPage";
+
+// Temporary placeholder pages (replace with real ones later)
+const Dashboard = () => <div>Dashboard</div>;
+const Students = () => <div>Students</div>;
+const Reports = () => <div>Reports</div>;
+const Exams = () => <div>Exams</div>;
+const Questions = () => <div>Questions</div>;
+const Users = () => <div>User Management</div>;
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center justify-center gap-6 p-6">
-      <div className="flex items-center gap-6">
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1 className="text-3xl font-bold tracking-tight">Vite + React</h1>
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 text-center max-w-md w-full">
-        <button
-          className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-white font-medium hover:bg-indigo-700 active:bg-indigo-800 transition"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          count is {count}
-        </button>
-        <p className="mt-4 text-sm text-slate-600">
-          Edit <code className="font-mono">src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="text-sm text-slate-500">
-        If you can see styling, Tailwind is working.
-      </p>
-    </div>
-  )
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/admin/login" element={<LoginPage />} />
+          <Route path="/403" element={<ForbiddenPage />} />
+
+          {/* Protected Admin Area */}
+          <Route
+            element={
+              <ProtectedRoute requiredRole={["ADMIN", "MANAGER", "TEACHER"]} />
+            }
+          >
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<Dashboard />} />
+              <Route path="/admin/students" element={<Students />} />
+              <Route path="/admin/reports" element={<Reports />} />
+              <Route path="/admin/exams" element={<Exams />} />
+              <Route path="/admin/questions" element={<Questions />} />
+              <Route path="/admin/users" element={<Users />} />
+            </Route>
+          </Route>
+
+          {/* Default redirect */}
+          <Route path="*" element={<Navigate to="/admin/login" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
