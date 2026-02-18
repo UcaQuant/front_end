@@ -10,6 +10,11 @@ import ForbiddenPage from "./pages/ForbiddenPage";
 import ManagerDashboard from "./pages/admin/ManagerDashboard";
 import StudentDirectory from "./pages/admin/StudentDirectory";
 import ReportsPage from "./pages/admin/ReportsPage";
+import ExamDashboard from "./pages/admin/ExamDashboard";
+import QuestionEditor from "./pages/admin/QuestionEditor";
+
+import InstructionsPage from "./pages/student/InstructionsPage";
+
 
 function App() {
   return (
@@ -30,6 +35,9 @@ function App() {
               <Route path="/admin/dashboard" element={<ManagerDashboard />} />
               <Route path="/admin/students" element={<StudentDirectory />} />
               <Route path="/admin/reports" element={<ReportsPage />} />
+              <Route path="/admin/exams" element={<ExamDashboard />} />
+              <Route path="/admin/exams/:examId/questions" element={<QuestionEditor />} />
+              <Route path="/pages/student/instructions" element={<InstructionsPage />} />
             </Route>
           </Route>
 
