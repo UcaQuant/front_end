@@ -246,6 +246,21 @@ export type CreateExamRequest = {
   timeLimitSeconds: number
 }
 
+export type TeacherStudentResultDto = {
+  sessionId: string
+  studentName: string
+  examTitle: string
+  score: number
+  totalQuestions: number
+  percentage: number
+  date: string
+}
+
+export async function getTeacherStudentResults(): Promise<TeacherStudentResultDto[]> {
+  const res = await api.get<TeacherStudentResultDto[]>('/teacher/results')
+  return res.data
+}
+
 export type QuestionCreationDto = {
   subject: 'MATH' | 'ENGLISH'
   content: string

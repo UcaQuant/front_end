@@ -14,6 +14,7 @@ import ResultPage from './pages/ResultPage'
 import ReviewPage from './pages/ReviewPage'
 import StudentLoginPage from './pages/StudentLoginPage'
 import StudentDashboardPage from './pages/StudentDashboardPage'
+import TeacherResultsPage from './pages/TeacherResultsPage'
 
 import { ExamProvider } from './context/ExamContext'
 
@@ -51,6 +52,14 @@ function App() {
           element: (
             <ProtectedRoute role="teacher">
               <ExamManagementPage />
+            </ProtectedRoute>
+          )
+        },
+        {
+          path: 'teacher/results',
+          element: (
+            <ProtectedRoute role="teacher">
+              <TeacherResultsPage />
             </ProtectedRoute>
           )
         },

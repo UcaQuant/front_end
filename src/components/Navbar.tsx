@@ -39,6 +39,7 @@ export function Navbar() {
     }
     if (isTeacher) {
         links.push({ to: '/teacher/exams', label: 'My Exams' })
+        links.push({ to: '/teacher/results', label: 'Student Results' })
     }
 
     if (!isAdmin && !isTeacher && !studentId) {
