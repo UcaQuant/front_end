@@ -34,7 +34,7 @@ function isAdminRequest(url?: string) {
   // Axios config.url is typically a relative path like "/admin/..."
   // We attach tokens ONLY for admin endpoints except login.
   const normalized = url.startsWith('http') ? new URL(url).pathname : url
-  return normalized.startsWith('/admin') && normalized !== '/admin/login'
+  return normalized.startsWith('/manager') || normalized.startsWith('/teacher') || (normalized.startsWith('/admin') && normalized !== '/admin/login')
 }
 
 function getAuthToken() {
@@ -68,7 +68,7 @@ function toApiError(err: unknown): ApiError {
 }
 
 export const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1',
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -89,58 +89,117 @@ api.interceptors.response.use(
 )
 
 // -----------------------------
-// Typed API methods (placeholders)
+// Backend-aligned API methods
 // -----------------------------
 
+// --- Student Registration ---
 export type RegisterStudentRequest = {
   firstName: string
   lastName: string
-  grade?: number
-  school?: string
+  mobileNumber: string
 }
 
 export type RegisterStudentResponse = {
-  studentId: string
+  success: boolean
+  data: {
+    studentId: string
+    nextAction: string
+  }
 }
 
 export async function registerStudent(body: RegisterStudentRequest) {
-  const res = await api.post<RegisterStudentResponse>('/students/register', body)
+  const res = await api.post<RegisterStudentResponse>('/students', body)
   return res.data
 }
 
+// --- Exam Flow ---
 export type StartExamRequest = { studentId: string }
-export type StartExamResponse = { attemptId: string; startedAt: string }
+export type StartExamResponse = {
+  sessionId: string
+  durationSeconds: number
+  startTime: string
+}
 
-export async function startExam(body: StartExamRequest) {
-  const res = await api.post<StartExamResponse>('/exam/start', body)
+export async function startExam(studentId: string) {
+    // Check if we need to pass studentId as query param or body. Spec says Query Param: studentId
+  const res = await api.post<StartExamResponse>(`/exams/start?studentId=${studentId}`)
   return res.data
 }
 
-export type SubmitExamRequest = { attemptId: string }
-export type SubmitExamResponse = { attemptId: string; submittedAt: string }
+export type QuestionDto = {
+  id: number
+  content: string
+  options: string[]
+  selectedOption: number | null
+}
 
-export async function submitExam(body: SubmitExamRequest) {
-  const res = await api.post<SubmitExamResponse>('/exam/submit', body)
+export type GetQuestionsResponse = {
+  questions: QuestionDto[]
+  totalPages: number
+  currentPage: number
+  isLastPage: boolean
+}
+
+export async function getQuestions(sessionId: string, page = 0, size = 5) {
+  const res = await api.get<GetQuestionsResponse>(`/exams/${sessionId}/questions`, {
+    params: { page, size },
+  })
   return res.data
 }
 
-export type GetResultResponse = {
-  attemptId: string
-  score: number
-  maxScore: number
+export type SubmitAnswerDto = {
+  questionId: number
+  selectedOptionIndex: number
 }
 
-export async function getResult(attemptId: string) {
-  const res = await api.get<GetResultResponse>(`/result/${encodeURIComponent(attemptId)}`)
+export async function submitAnswers(sessionId: string, answers: SubmitAnswerDto[]) {
+  const res = await api.put(`/exams/${sessionId}/answers`, answers)
   return res.data
 }
+
+export type SubmitExamResponse = {
+    answeredCount: number
+    totalCount: number
+    unansweredCount: number
+}
+
+export async function submitExam(sessionId: string) {
+  const res = await api.post<SubmitExamResponse>(`/exams/${sessionId}/submit`)
+  return res.data
+}
+
+export type FinishExamResponse = {
+    reportDownloadUrl: string
+}
+
+export async function finishExam(sessionId: string) {
+  const res = await api.post<FinishExamResponse>(`/exams/${sessionId}/finish`)
+  return res.data
+}
+
+export function getReportUrl(sessionId: string) {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
+    return `${baseUrl}/reports/${sessionId}/download`
+}
+
+// --- Admin/Auth ---
 
 export type AdminLoginRequest = { username: string; password: string }
-export type AdminLoginResponse = { token: string }
+export type AdminLoginResponse = { accessToken: string } // Spec says "accessToken" in flow description 6.2, but response example for 3.2.1 is nested. Wait, 6.3.1 says "Returns Role Checks", but let's assume standard JWT response.
 
 export async function adminLogin(body: AdminLoginRequest) {
-  // Note: request interceptor will NOT attach a token for /admin/login
-  const res = await api.post<AdminLoginResponse>('/admin/login', body)
+  const res = await api.post<AdminLoginResponse>('/auth/login', body)
   return res.data
 }
 
+export type DashboardStats = {
+  totalStudents: number
+  studentsRegisteredToday: number
+  examsCompleted: number
+}
+
+export async function getDashboardStats() {
+    // Endpoint: /api/v1/manager/dashboard-stats
+    const res = await api.get<DashboardStats>('/manager/dashboard-stats')
+    return res.data
+}

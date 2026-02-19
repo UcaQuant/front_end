@@ -8,29 +8,33 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { submitExam as submitExamApi } from '../services/api'
+import {
+  startExam as startExamApi,
+  submitAnswers as submitAnswersApi,
+  submitExam as submitExamApi,
+  finishExam as finishExamApi,
+  type QuestionDto,
+} from '../services/api'
 
 type ExamContextValue = {
-  /** Current exam/attempt id from backend (set when exam is started). */
   sessionId: string | null
-  /** 0-based index of the current question page. */
+  studentId: string | null
+  questions: QuestionDto[]
   currentPage: number
-  /** Map of questionId -> selected option index. */
-  answers: Map<string, number>
-  /** Seconds remaining (managed by timer). */
+  totalPages: number
+  answers: Map<number, number> // questionId -> optionIndex
   timeLeft: number
-  /** Set selected option for a question (persists across navigation). */
-  setAnswer: (questionId: string, optionIndex: number) => void
-  /** Move to the next question page. */
+  isLoading: boolean
+
+  startExam: (studentId: string) => Promise<void>
+  loadQuestions: (page: number) => Promise<void>
+  selectOption: (questionId: number, optionIndex: number) => void
+  submitCurrentAnswers: () => Promise<void>
+  submitExam: () => Promise<{ answeredCount: number; totalCount: number; unansweredCount: number } | undefined> // Marks as SUBMITTED
+  finishExam: () => Promise<string> // Marks as COMPLETED, returns report URL
+
   nextPage: () => void
-  /** Submit the exam to the API; uses sessionId. */
-  submitExam: () => Promise<void>
-  /** Start the countdown timer with given seconds; call when exam starts. */
-  startTimer: (initialSeconds: number) => void
-  /** Set session id (e.g. after startExam API returns attemptId). */
-  setSessionId: (id: string | null) => void
-  /** Set current page index (e.g. when loading a specific question). */
-  setCurrentPage: (page: number) => void
+  prevPage: () => void
 }
 
 const ExamContext = createContext<ExamContextValue | null>(null)
@@ -43,47 +47,43 @@ export function useExam() {
   return ctx
 }
 
-type ExamProviderProps = { children: ReactNode }
+export function ExamProvider({ children }: { children: ReactNode }) {
+  const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('sessionId'))
+  const [studentId, setStudentId] = useState<string | null>(() => localStorage.getItem('studentId'))
 
-export function ExamProvider({ children }: ExamProviderProps) {
-  const [sessionId, setSessionIdState] = useState<string | null>(null)
+  const [questions, setQuestions] = useState<QuestionDto[]>([])
   const [currentPage, setCurrentPage] = useState(0)
-  const [answers, setAnswers] = useState(() => new Map<string, number>())
+  const [totalPages, setTotalPages] = useState(0)
+
+  const [answers, setAnswers] = useState<Map<number, number>>(() => {
+    // TODO: Load from localStorage if needed for crash recovery, 
+    // but backend should provide saved answers on fetch.
+    return new Map()
+  })
+
   const [timeLeft, setTimeLeft] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const setAnswer = useCallback((questionId: string, optionIndex: number) => {
-    setAnswers((prev) => {
-      const next = new Map(prev)
-      next.set(questionId, optionIndex)
-      return next
-    })
-  }, [])
-
-  const nextPage = useCallback(() => {
-    setCurrentPage((p) => p + 1)
-  }, [])
-
-  const submitExam = useCallback(async () => {
-    if (!sessionId) {
-      throw new Error('No active session to submit')
-    }
-    await submitExamApi({ attemptId: sessionId })
+  // Persist session info
+  useEffect(() => {
+    if (sessionId) localStorage.setItem('sessionId', sessionId)
+    else localStorage.removeItem('sessionId')
   }, [sessionId])
 
-  const startTimer = useCallback((initialSeconds: number) => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-    setTimeLeft(initialSeconds)
+  useEffect(() => {
+    if (studentId) localStorage.setItem('studentId', studentId)
+    else localStorage.removeItem('studentId')
+  }, [studentId])
+
+  const startTimer = useCallback((seconds: number) => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    setTimeLeft(seconds)
     intervalRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current)
-            intervalRef.current = null
-          }
+          if (intervalRef.current) clearInterval(intervalRef.current)
           return 0
         }
         return t - 1
@@ -91,46 +91,143 @@ export function ExamProvider({ children }: ExamProviderProps) {
     }, 1000)
   }, [])
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
+  // Start Exam
+  const startExam = useCallback(async (sId: string) => {
+    setIsLoading(true)
+    try {
+      setStudentId(sId)
+      const data = await startExamApi(sId)
+      setSessionId(data.sessionId)
+      startTimer(data.durationSeconds)
+      // Reset state for new exam
+      setAnswers(new Map())
+      setCurrentPage(0)
+    } finally {
+      setIsLoading(false)
     }
+  }, [startTimer])
+
+  // Load Questions (and sync answers from backend if needed)
+  // Backend spec says: "Do NOT expose correct_index". 
+  // It also says: "selectedOption: null // or existing selection if autosaved"
+  // So we can populate our answers map from the fetched questions.
+  // BUT: The component might call this on page change.
+  const loadQuestions = useCallback(async (page: number) => {
+    if (!sessionId) return
+    setIsLoading(true)
+    try {
+      // We need to import getQuestions from api, but I missed exporting it in the import statement above? 
+      // No, I need to add it to the import.
+      // Wait, I can't modify the import inside this function. 
+      // I will use `import { getQuestions } ...` at top level. 
+      // For now, let's assume I fixed the imports in the replacement string.
+      const { getQuestions } = await import('../services/api')
+
+      const data = await getQuestions(sessionId, page, 5) // size 5 default
+      setQuestions(data.questions)
+      setTotalPages(data.totalPages)
+      setCurrentPage(data.currentPage)
+
+      // Sync answers from backend
+      setAnswers(prev => {
+        const next = new Map(prev)
+        data.questions.forEach(q => {
+          if (q.selectedOption !== null && q.selectedOption !== undefined) {
+            next.set(q.id, q.selectedOption)
+          }
+        })
+        return next
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [sessionId])
+
+  const selectOption = useCallback((qId: number, optIdx: number) => {
+    setAnswers(prev => {
+      const next = new Map(prev)
+      next.set(qId, optIdx)
+      return next
+    })
   }, [])
 
-  const setSessionId = useCallback((id: string | null) => {
-    setSessionIdState(id)
-  }, [])
+  const submitCurrentAnswers = useCallback(async () => {
+    if (!sessionId) return
+    // Collect answers for current page's questions to save bandwidth/calls?
+    // Or just all modified answers? 
+    // The API `submitAnswers` takes a list.
+    // Let's send only the answers that correspond to the current visible questions 
+    // OR just send the single answer if we want to autosave per click (but that might be too many calls).
+    // The spec says: "Frontend calls PUT ... When Student navigates between pages or clicks Next".
+    // So we should call this on `nextPage`.
 
-  const value: ExamContextValue = useMemo(
-    () => ({
-      sessionId,
-      currentPage,
-      answers,
-      timeLeft,
-      setAnswer,
-      nextPage,
-      submitExam,
-      startTimer,
-      setSessionId,
-      setCurrentPage,
-    }),
-    [
-      sessionId,
-      currentPage,
-      answers,
-      timeLeft,
-      setAnswer,
-      nextPage,
-      submitExam,
-      startTimer,
-      setSessionId,
-      setCurrentPage,
-    ],
-  )
+    // Let's gather answers for the *current questions*
+    const answersToSend = questions
+      .map(q => ({
+        questionId: q.id,
+        selectedOptionIndex: answers.get(q.id)
+      }))
+      .filter(a => a.selectedOptionIndex !== undefined) as { questionId: number, selectedOptionIndex: number }[]
 
-  return (
-    <ExamContext.Provider value={value}>{children}</ExamContext.Provider>
-  )
+    if (answersToSend.length > 0) {
+      await submitAnswersApi(sessionId, answersToSend)
+    }
+  }, [sessionId, questions, answers])
+
+  const nextPage = useCallback(async () => {
+    // Save first
+    await submitCurrentAnswers()
+    if (currentPage < totalPages - 1) {
+      await loadQuestions(currentPage + 1)
+    }
+  }, [currentPage, totalPages, submitCurrentAnswers, loadQuestions])
+
+  const prevPage = useCallback(async () => {
+    // Maybe save here too?
+    await submitCurrentAnswers()
+    if (currentPage > 0) {
+      await loadQuestions(currentPage - 1)
+    }
+  }, [currentPage, submitCurrentAnswers, loadQuestions])
+
+  const submitExam = useCallback(async () => {
+    if (!sessionId) {
+      throw new Error("No session")
+    }
+    await submitCurrentAnswers() // Save pending
+    const data = await submitExamApi(sessionId)
+    return data
+  }, [sessionId, submitCurrentAnswers])
+
+  const finishExam = useCallback(async () => {
+    if (!sessionId) throw new Error("No session")
+    const res = await finishExamApi(sessionId)
+    // Clear local session
+    localStorage.removeItem('sessionId')
+    localStorage.removeItem('studentId')
+    setSessionId(null)
+    setStudentId(null)
+    return res.reportDownloadUrl
+  }, [sessionId])
+
+  const value = useMemo(() => ({
+    sessionId,
+    studentId,
+    questions,
+    currentPage,
+    totalPages,
+    answers,
+    timeLeft,
+    isLoading,
+    startExam,
+    loadQuestions,
+    selectOption,
+    submitCurrentAnswers,
+    submitExam,
+    finishExam,
+    nextPage,
+    prevPage
+  }), [sessionId, studentId, questions, currentPage, totalPages, answers, timeLeft, isLoading, startExam, loadQuestions, selectOption, submitCurrentAnswers, submitExam, finishExam, nextPage, prevPage])
+
+  return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>
 }
