@@ -32,9 +32,12 @@ export default function AdminLoginPage() {
       const res = await adminLogin(payload)
       // Store token for admin routes (matches interceptor key)
       localStorage.setItem('authToken', res.token)
+      localStorage.setItem('userRole', res.role || 'ADMIN') // Fallback if role is missing
+      localStorage.setItem('username', res.username)
+
       setToast({ type: 'success', message: 'Login successful.' })
-      // TODO: when an admin dashboard route exists, redirect there instead.
-      // navigate('/admin/dashboard')
+      // Redirect to dashboard
+      window.location.href = '/admin/dashboard'
     } catch (err) {
       if (err instanceof ApiError) {
         setToast({

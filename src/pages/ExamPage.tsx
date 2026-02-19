@@ -15,6 +15,7 @@ export default function ExamPage() {
     nextPage,
     prevPage,
     loadQuestions,
+    submitExam,
     isLoading,
   } = useExam()
 
@@ -40,8 +41,14 @@ export default function ExamPage() {
 
   // Handle Submit
   const handleSubmit = async () => {
-    // Navigate to review page
-    navigate('/review')
+    try {
+      const stats = await submitExam()
+      // Navigate to review page with stats
+      navigate('/review', { state: { stats } })
+    } catch (error) {
+      console.error("Failed to submit exam:", error)
+      // Optional: show error to user
+    }
   }
 
   if (isLoading && questions.length === 0) {

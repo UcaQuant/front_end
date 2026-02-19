@@ -6,9 +6,5 @@ import { ExamProvider } from '../context/ExamContext'
  * (session, answers, timer, setAnswer, nextPage, submitExam).
  */
 export function ExamLayout() {
-  return (
-    <ExamProvider>
-      <Outlet />
-    </ExamProvider>
-  )
+  return <Outlet />
 }

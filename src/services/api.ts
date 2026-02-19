@@ -120,9 +120,8 @@ export type StartExamResponse = {
   startTime: string
 }
 
-export async function startExam(studentId: string) {
-    // Check if we need to pass studentId as query param or body. Spec says Query Param: studentId
-  const res = await api.post<StartExamResponse>(`/exams/start?studentId=${studentId}`)
+export async function startExam(studentId: string, examId: number) {
+  const res = await api.post<StartExamResponse>(`/exams/start?studentId=${studentId}&examId=${examId}`)
   return res.data
 }
 
@@ -158,9 +157,9 @@ export async function submitAnswers(sessionId: string, answers: SubmitAnswerDto[
 }
 
 export type SubmitExamResponse = {
-    answeredCount: number
-    totalCount: number
-    unansweredCount: number
+  answeredCount: number
+  totalCount: number
+  unansweredCount: number
 }
 
 export async function submitExam(sessionId: string) {
@@ -169,7 +168,7 @@ export async function submitExam(sessionId: string) {
 }
 
 export type FinishExamResponse = {
-    reportDownloadUrl: string
+  downloadUrl: string
 }
 
 export async function finishExam(sessionId: string) {
@@ -178,14 +177,18 @@ export async function finishExam(sessionId: string) {
 }
 
 export function getReportUrl(sessionId: string) {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
-    return `${baseUrl}/reports/${sessionId}/download`
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
+  return `${baseUrl}/reports/${sessionId}/download`
 }
 
 // --- Admin/Auth ---
 
 export type AdminLoginRequest = { username: string; password: string }
-export type AdminLoginResponse = { accessToken: string } // Spec says "accessToken" in flow description 6.2, but response example for 3.2.1 is nested. Wait, 6.3.1 says "Returns Role Checks", but let's assume standard JWT response.
+export type AdminLoginResponse = {
+  token: string
+  role: string
+  username: string
+}
 
 export async function adminLogin(body: AdminLoginRequest) {
   const res = await api.post<AdminLoginResponse>('/auth/login', body)
@@ -198,8 +201,75 @@ export type DashboardStats = {
   examsCompleted: number
 }
 
-export async function getDashboardStats() {
-    // Endpoint: /api/v1/manager/dashboard-stats
-    const res = await api.get<DashboardStats>('/manager/dashboard-stats')
-    return res.data
+// --- Exam Management (Teacher/Admin) ---
+
+export type ExamDto = {
+  id: number
+  title: string
+  timeLimitSeconds: number
+  questions: QuestionDto[]
 }
+
+export type CreateExamRequest = {
+  title: string
+  timeLimitSeconds: number
+}
+
+export type QuestionCreationDto = {
+  subject: 'MATH' | 'ENGLISH'
+  content: string
+  options: string[]
+  correctIndex: number
+}
+
+export type StudentExamDto = {
+  id: number
+  title: string
+  timeLimitSeconds: number
+}
+
+export async function getExams() {
+  const res = await api.get<ExamDto[]>('/teacher/exams')
+  return res.data
+}
+
+export async function getStudentExams() {
+  const res = await api.get<StudentExamDto[]>('/exams')
+  return res.data
+}
+
+export async function createExam(body: CreateExamRequest) {
+  const res = await api.post<ExamDto>('/teacher/exams', body)
+  return res.data
+}
+
+export async function addQuestion(examId: number, body: QuestionCreationDto) {
+  const res = await api.post<QuestionDto>(`/teacher/exams/${examId}/questions`, body)
+  return res.data
+}
+
+
+export type ExamResult = {
+  mathCorrect: number
+  mathTotal: number
+  mathPercentage: number
+  englishCorrect: number
+  englishTotal: number
+  englishPercentage: number
+  totalCorrect: number
+  totalQuestions: number
+  totalPercentage: number
+  completedAt: string
+}
+
+export async function getExamResult(sessionId: string) {
+  const res = await api.get<ExamResult>(`/exams/${sessionId}/result`)
+  return res.data
+}
+
+export async function getDashboardStats() {
+  // Endpoint: /api/v1/manager/dashboard-stats
+  const res = await api.get<DashboardStats>('/manager/dashboard-stats')
+  return res.data
+}
+

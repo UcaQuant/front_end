@@ -26,12 +26,13 @@ type ExamContextValue = {
   timeLeft: number
   isLoading: boolean
 
-  startExam: (studentId: string) => Promise<void>
+  startExam: (studentId: string, examId: number) => Promise<void>
   loadQuestions: (page: number) => Promise<void>
   selectOption: (questionId: number, optionIndex: number) => void
   submitCurrentAnswers: () => Promise<void>
   submitExam: () => Promise<{ answeredCount: number; totalCount: number; unansweredCount: number } | undefined> // Marks as SUBMITTED
   finishExam: () => Promise<string> // Marks as COMPLETED, returns report URL
+  setStudentId: (id: string | null) => void
 
   nextPage: () => void
   prevPage: () => void
@@ -92,11 +93,11 @@ export function ExamProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // Start Exam
-  const startExam = useCallback(async (sId: string) => {
+  const startExam = useCallback(async (sId: string, examId: number) => {
     setIsLoading(true)
     try {
       setStudentId(sId)
-      const data = await startExamApi(sId)
+      const data = await startExamApi(sId, examId)
       setSessionId(data.sessionId)
       startTimer(data.durationSeconds)
       // Reset state for new exam
@@ -204,10 +205,13 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     const res = await finishExamApi(sessionId)
     // Clear local session
     localStorage.removeItem('sessionId')
-    localStorage.removeItem('studentId')
+    // localStorage.removeItem('studentId') // Keep student ID to show results
     setSessionId(null)
-    setStudentId(null)
-    return res.reportDownloadUrl
+    // setStudentId(null) // Keep student ID to show results
+    const url = res.downloadUrl.startsWith('http')
+      ? res.downloadUrl
+      : `http://localhost:8080${res.downloadUrl}`
+    return url
   }, [sessionId])
 
   const value = useMemo(() => ({
@@ -225,9 +229,28 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     submitCurrentAnswers,
     submitExam,
     finishExam,
+    setStudentId,
     nextPage,
     prevPage
-  }), [sessionId, studentId, questions, currentPage, totalPages, answers, timeLeft, isLoading, startExam, loadQuestions, selectOption, submitCurrentAnswers, submitExam, finishExam, nextPage, prevPage])
+  }), [
+    sessionId,
+    studentId,
+    questions,
+    currentPage,
+    totalPages,
+    answers,
+    timeLeft,
+    isLoading,
+    startExam,
+    loadQuestions,
+    selectOption,
+    submitCurrentAnswers,
+    submitExam,
+    finishExam,
+    setStudentId,
+    nextPage,
+    prevPage,
+  ])
 
   return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>
 }

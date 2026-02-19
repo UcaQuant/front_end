@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { registerStudent, type RegisterStudentRequest } from '../services/api'
+import { useExam } from '../context/ExamContext'
 
 export default function RegistrationPage() {
   const navigate = useNavigate()
+  const { setStudentId } = useExam()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -20,7 +22,9 @@ export default function RegistrationPage() {
     try {
       const response = await registerStudent(data)
       if (response && response.data && response.data.studentId) {
-        localStorage.setItem('studentId', response.data.studentId)
+        // Update context (this will also update localStorage via useEffect in Context)
+        setStudentId(response.data.studentId)
+
         // Also save name for welcome message?
         localStorage.setItem('studentName', `${data.firstName} ${data.lastName}`)
         navigate('/instructions')

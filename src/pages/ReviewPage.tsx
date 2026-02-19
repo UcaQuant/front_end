@@ -5,7 +5,7 @@ import { useExam } from '../context/ExamContext'
 export default function ReviewPage() {
   const navigate = useNavigate()
   const { state } = useLocation()
-  const { finishExam } = useExam()
+  const { finishExam, sessionId } = useExam()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -14,9 +14,10 @@ export default function ReviewPage() {
   const handleFinish = async () => {
     setIsLoading(true)
     setError(null)
+    const currentSessionId = sessionId // Capture before clearing
     try {
       const reportUrl = await finishExam()
-      navigate('/result', { state: { reportUrl } })
+      navigate('/result', { state: { reportUrl, sessionId: currentSessionId } })
     } catch (err: any) {
       setError(err.message || 'Failed to finish exam. Please try again.')
     } finally {
