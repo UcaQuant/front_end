@@ -12,6 +12,8 @@ import NotFoundPage from './pages/NotFoundPage'
 import RegistrationPage from './pages/RegistrationPage'
 import ResultPage from './pages/ResultPage'
 import ReviewPage from './pages/ReviewPage'
+import StudentLoginPage from './pages/StudentLoginPage'
+import StudentDashboardPage from './pages/StudentDashboardPage'
 
 import { ExamProvider } from './context/ExamContext'
 
@@ -26,6 +28,15 @@ function App() {
       ),
       children: [
         { index: true, element: <RegistrationPage /> },
+        { path: 'login', element: <StudentLoginPage /> },
+        {
+          path: 'dashboard',
+          element: (
+            <ProtectedRoute role="student">
+              <StudentDashboardPage />
+            </ProtectedRoute>
+          )
+        },
         { path: 'admin/login', element: <AdminLoginPage /> },
         {
           path: 'admin/dashboard',

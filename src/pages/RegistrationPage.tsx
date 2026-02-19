@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { registerStudent, type RegisterStudentRequest } from '../services/api'
@@ -6,9 +6,15 @@ import { useExam } from '../context/ExamContext'
 
 export default function RegistrationPage() {
   const navigate = useNavigate()
-  const { setStudentId } = useExam()
+  const { studentId, setStudentId } = useExam()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (studentId) {
+      navigate('/dashboard')
+    }
+  }, [studentId, navigate])
 
   const {
     register,
@@ -112,7 +118,7 @@ export default function RegistrationPage() {
                   {...register('mobileNumber', {
                     required: 'Mobile number is required',
                     pattern: {
-                      value: /^[0-9]{10}$/,
+                      value: /^\d{10}$/,
                       message: 'Mobile number must be 10 digits',
                     },
                   })}
@@ -122,6 +128,27 @@ export default function RegistrationPage() {
                 {errors.mobileNumber && (
                   <p className="mt-2 text-sm text-red-600">
                     {errors.mobileNumber.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  {...register('password', { required: 'Password is required' })}
+                  className="block w-full rounded-md border-0 py-2.5 px-3.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-all"
+                  placeholder="******"
+                />
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {errors.password.message}
                   </p>
                 )}
               </div>

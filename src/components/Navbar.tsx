@@ -15,28 +15,27 @@ export function Navbar() {
 
     // Student Links
     if (studentId) {
+        links.push({ to: '/dashboard', label: 'Dashboard' })
         if (sessionId) {
             // In active exam session
             links.push({ to: '/exam', label: 'Exam' })
-            links.push({ to: '/review', label: 'Review' })
         } else if (pathname === '/result') {
             // Exam finished
             links.push({ to: '/result', label: 'Result' })
         } else {
-            // Registered but not started (or just finished and somehow here)
-            // Default to instructions
             links.push({ to: '/instructions', label: 'Instructions' })
         }
     } else {
         // Not registered as student
         if (!isAdmin && !isTeacher) {
-            links.push({ to: '/', label: 'Student Registration' })
+            links.push({ to: '/', label: 'Register' })
+            links.push({ to: '/login', label: 'Student Login' })
         }
     }
 
     // Admin/Teacher Links
     if (isAdmin) {
-        links.push({ to: '/admin/dashboard', label: 'Dashboard' })
+        links.push({ to: '/admin/dashboard', label: 'Admin Dashboard' })
     }
     if (isTeacher) {
         links.push({ to: '/teacher/exams', label: 'My Exams' })
@@ -57,8 +56,11 @@ export function Navbar() {
     return (
         <div className="mx-auto max-w-5xl px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-baseline gap-3">
-                <Link to="/" className="text-lg font-semibold hover:text-indigo-600 transition">
-                    {import.meta.env.VITE_APP_NAME ?? 'Assessment Platform'}
+                <Link
+                    to={studentId ? '/dashboard' : isAdmin ? '/admin/dashboard' : isTeacher ? '/teacher/exams' : '/'}
+                    className="text-lg font-semibold hover:text-indigo-600 transition"
+                >
+                    Assessment Platform
                 </Link>
             </div>
 

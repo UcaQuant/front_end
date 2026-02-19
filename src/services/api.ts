@@ -97,18 +97,49 @@ export type RegisterStudentRequest = {
   firstName: string
   lastName: string
   mobileNumber: string
+  password?: string
 }
 
-export type RegisterStudentResponse = {
+export type StudentRegistrationResponse = {
   success: boolean
-  data: {
+  data?: {
     studentId: string
-    nextAction: string
+    redirectUrl: string
   }
+  message?: string
 }
 
-export async function registerStudent(body: RegisterStudentRequest) {
-  const res = await api.post<RegisterStudentResponse>('/students', body)
+export async function registerStudent(
+  data: RegisterStudentRequest,
+): Promise<StudentRegistrationResponse> {
+  const res = await api.post<StudentRegistrationResponse>('/students', data)
+  return res.data
+}
+
+// --- Student Login ---
+export type StudentLoginRequest = {
+  mobileNumber: string
+  password?: string
+}
+
+export async function studentLogin(
+  data: StudentLoginRequest
+): Promise<StudentRegistrationResponse> {
+  const res = await api.post<StudentRegistrationResponse>('/students/login', data)
+  return res.data
+}
+
+// --- Student History ---
+export type StudentExamHistoryDto = {
+  examTitle: string
+  score: number
+  totalQuestions: number
+  date: string // ISO date string
+  reportUrl: string
+}
+
+export async function getStudentHistory(studentId: string): Promise<StudentExamHistoryDto[]> {
+  const res = await api.get<StudentExamHistoryDto[]>(`/students/${studentId}/history`)
   return res.data
 }
 
