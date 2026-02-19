@@ -37,7 +37,7 @@ export default function ExamDashboard() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* header */}
+
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-semibold">Exams</h1>
         <button
@@ -48,7 +48,7 @@ export default function ExamDashboard() {
         </button>
       </div>
 
-      {/* grid */}
+
       {loading ? (
         <p>Loading...</p>
       ) : (

@@ -1,11 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from 'axios'
 
-/**
- * Centralized API client for the app.
- *
- * Base URL is configured via Vite env:
- * - VITE_API_BASE_URL=http://localhost:8080/api/v1
- */
+
 
 export type ApiErrorPayload = {
   message?: string
@@ -31,8 +26,7 @@ export class ApiError extends Error {
 function isAdminRequest(url?: string) {
   if (!url) return false
 
-  // Axios config.url is typically a relative path like "/admin/..."
-  // We attach tokens ONLY for admin endpoints except login.
+
   const normalized = url.startsWith('http') ? new URL(url).pathname : url
   return normalized.startsWith('/admin') && normalized !== '/admin/login'
 }
@@ -88,9 +82,7 @@ api.interceptors.response.use(
   (error: unknown) => Promise.reject(toApiError(error)),
 )
 
-// -----------------------------
-// Typed API methods (placeholders)
-// -----------------------------
+
 
 export type RegisterStudentRequest = {
   firstName: string
@@ -139,7 +131,7 @@ export type AdminLoginRequest = { username: string; password: string }
 export type AdminLoginResponse = { token: string }
 
 export async function adminLogin(body: AdminLoginRequest) {
-  // Note: request interceptor will NOT attach a token for /admin/login
+
   const res = await api.post<AdminLoginResponse>('/admin/login', body)
   return res.data
 }

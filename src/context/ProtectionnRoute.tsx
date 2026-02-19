@@ -1,4 +1,4 @@
-import { ReactNode, useContext } from "react";
+import { type ReactNode, useContext } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
@@ -15,12 +15,12 @@ export default function ProtectedRoute({
 
   const isAuthenticated = auth.isAuthenticated && auth.token;
 
-  // 🚫 Not logged in → login page
+
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  // 🚫 Role check
+
   if (requiredRole) {
     const allowedRoles = Array.isArray(requiredRole)
       ? requiredRole
@@ -31,6 +31,6 @@ export default function ProtectedRoute({
     }
   }
 
-  // ✅ Authorized
+
   return children ? <>{children}</> : <Outlet />;
 }

@@ -36,17 +36,17 @@ export default function LoginPage() {
 
       const data: LoginResponse = await res.json();
 
-      // Store token securely
+
       localStorage.setItem("token", data.token);
 
-      // Store role in context
+
       setAuth({
         token: data.token,
         role: data.role,
         isAuthenticated: true,
       });
 
-      // Redirect based on role
+
       if (data.role === "ADMIN") navigate("/admin/dashboard");
       else if (data.role === "MANAGER") navigate("/manager/dashboard");
       else navigate("/");

@@ -41,7 +41,7 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
+
       <aside
         className={`
           bg-gray-900 text-white w-64 p-4 space-y-4
@@ -75,9 +75,9 @@ export default function AdminLayout() {
         </button>
       </aside>
 
-      {/* Content */}
+
       <div className="flex-1 flex flex-col w-full">
-        {/* Top bar (mobile toggle) */}
+
         <header className="md:hidden p-4 shadow flex justify-between">
           <button onClick={() => setOpen(!open)}>☰</button>
           <span className="font-semibold">Admin</span>

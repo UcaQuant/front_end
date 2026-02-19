@@ -31,16 +31,16 @@ export default function RegistrationPage() {
     const payload: RegisterStudentRequest = {
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
-      // You can extend this later with grade/school
+
     }
 
     try {
       const result = await registerStudentWithRetry(payload)
-      // Store student id for later steps (e.g. starting exam)
+
       localStorage.setItem('studentId', result.studentId)
       setToast({ type: 'success', message: 'Registration successful! Redirecting…' })
       reset({ firstName: '', lastName: '', mobile: '' })
-      // Short delay so the user can see the toast before navigation
+
       setTimeout(() => navigate('/instructions'), 600)
     } catch (err) {
       if (err instanceof ApiError) {

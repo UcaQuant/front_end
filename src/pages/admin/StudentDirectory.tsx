@@ -29,7 +29,7 @@ export default function StudentDirectory() {
 
   const [globalFilter, setGlobalFilter] = useState("");
 
-  /* ---------------- Modal State ---------------- */
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -43,7 +43,7 @@ export default function StudentDirectory() {
     setModalOpen(false);
   };
 
-  /* ---------------- Fetch Students ---------------- */
+
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -68,7 +68,7 @@ export default function StudentDirectory() {
     fetchStudents();
   }, []);
 
-  /* ---------------- Columns ---------------- */
+
 
   const columns = useMemo<ColumnDef<Student>[]>(
     () => [
@@ -91,11 +91,10 @@ export default function StudentDirectory() {
         accessorKey: "status",
         cell: (info) => (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
-              info.getValue() === "ACTIVE"
+            className={`px-2 py-1 rounded text-xs font-medium ${info.getValue() === "ACTIVE"
                 ? "bg-green-100 text-green-700"
                 : "bg-gray-200 text-gray-600"
-            }`}
+              }`}
           >
             {info.getValue<string>()}
           </span>
@@ -116,7 +115,7 @@ export default function StudentDirectory() {
     []
   );
 
-  /* ---------------- Table ---------------- */
+
 
   const table = useReactTable({
     data,
@@ -129,13 +128,13 @@ export default function StudentDirectory() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  /* ---------------- UI ---------------- */
+
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Students Directory</h1>
 
-      {/* Search */}
+
       <input
         type="text"
         placeholder="Search by name or mobile..."
@@ -144,13 +143,13 @@ export default function StudentDirectory() {
         className="border p-2 rounded w-full max-w-sm"
       />
 
-      {/* Loading/Error */}
+
       {loading && <p>Loading students...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && (
         <>
-          {/* Table */}
+
           <div className="overflow-x-auto bg-white rounded-xl shadow">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-100">
@@ -194,7 +193,7 @@ export default function StudentDirectory() {
             </table>
           </div>
 
-          {/* Pagination */}
+
           <div className="flex items-center gap-4">
             <button
               onClick={() => table.previousPage()}
@@ -218,7 +217,7 @@ export default function StudentDirectory() {
         </>
       )}
 
-      {/* Contact Modal */}
+
       <ContactInfoModal
         studentId={selectedId}
         isOpen={modalOpen}

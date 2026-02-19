@@ -55,7 +55,7 @@ export default function QuestionEditor() {
 
   return (
     <div className="grid grid-cols-2 h-screen">
-      {/* LEFT */}
+
       <div className="border-r p-4 overflow-y-auto space-y-2">
         {questions.map((q) => (
           <div
@@ -69,7 +69,7 @@ export default function QuestionEditor() {
         ))}
       </div>
 
-      {/* RIGHT */}
+
       <div className="p-6 space-y-3">
         <textarea
           className="border w-full p-2"

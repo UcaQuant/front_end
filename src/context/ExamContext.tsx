@@ -11,25 +11,15 @@ import {
 import { submitExam as submitExamApi } from '../services/api'
 
 type ExamContextValue = {
-  /** Current exam/attempt id from backend (set when exam is started). */
   sessionId: string | null
-  /** 0-based index of the current question page. */
   currentPage: number
-  /** Map of questionId -> selected option index. */
   answers: Map<string, number>
-  /** Seconds remaining (managed by timer). */
   timeLeft: number
-  /** Set selected option for a question (persists across navigation). */
   setAnswer: (questionId: string, optionIndex: number) => void
-  /** Move to the next question page. */
   nextPage: () => void
-  /** Submit the exam to the API; uses sessionId. */
   submitExam: () => Promise<void>
-  /** Start the countdown timer with given seconds; call when exam starts. */
   startTimer: (initialSeconds: number) => void
-  /** Set session id (e.g. after startExam API returns attemptId). */
   setSessionId: (id: string | null) => void
-  /** Set current page index (e.g. when loading a specific question). */
   setCurrentPage: (page: number) => void
 }
 

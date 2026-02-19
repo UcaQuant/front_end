@@ -40,7 +40,7 @@ export default function ManagerDashboard() {
     }
   };
 
-  // initial load + polling every 30s
+
   useEffect(() => {
     fetchStats();
 
@@ -67,14 +67,14 @@ export default function ManagerDashboard() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Manager Dashboard</h1>
 
-      {/* ===== Stats Cards ===== */}
+
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Students" value={stats.totalStudents} />
         <StatCard title="Registered Today" value={stats.registeredToday} />
         <StatCard title="Exams Completed" value={stats.examsCompleted} />
       </div>
 
-      {/* ===== Chart ===== */}
+
       <div className="bg-white rounded-xl shadow p-6 h-80">
         <h2 className="mb-4 font-semibold">
           Exam Completion Rate ({completionRate}%)
@@ -99,9 +99,7 @@ export default function ManagerDashboard() {
   );
 }
 
-/* -------------------------- */
-/* Reusable Card Component */
-/* -------------------------- */
+
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (

@@ -46,7 +46,7 @@ export default function ReportsPage() {
         }
       }
 
-      const blob = new Blob(chunks, {
+      const blob = new Blob(chunks as any, {
         type: "application/zip",
       });
 
@@ -77,7 +77,7 @@ export default function ReportsPage() {
         {downloading ? "Downloading..." : "Download All Reports"}
       </button>
 
-      {/* Progress Bar */}
+
       {downloading && (
         <div className="w-full max-w-md bg-gray-200 rounded h-4 overflow-hidden">
           <div

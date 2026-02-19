@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 type StartExamResponse = {
   sessionId: string;
-  duration: number; // minutes (optional from backend)
+  duration: number;
 };
 
 export default function InstructionsPage() {
@@ -12,9 +12,7 @@ export default function InstructionsPage() {
   const [loading, setLoading] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
 
-  /* --------------------------------------------------
-     Guard: must have studentId
-  -------------------------------------------------- */
+
   useEffect(() => {
     const studentId = localStorage.getItem("studentId");
 
@@ -23,9 +21,7 @@ export default function InstructionsPage() {
     }
   }, [navigate]);
 
-  /* --------------------------------------------------
-     Start Exam
-  -------------------------------------------------- */
+
   const handleStartExam = async () => {
     try {
       setLoading(true);
@@ -46,7 +42,7 @@ export default function InstructionsPage() {
 
       const data: StartExamResponse = await res.json();
 
-      // save session
+
       localStorage.setItem("examSessionId", data.sessionId);
 
       if (data.duration) setDuration(data.duration);
@@ -59,15 +55,13 @@ export default function InstructionsPage() {
     }
   };
 
-  /* --------------------------------------------------
-     UI
-  -------------------------------------------------- */
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="bg-white w-full max-w-3xl rounded-xl shadow-md p-8 space-y-6">
         <h1 className="text-2xl font-semibold">Exam Instructions</h1>
 
-        {/* Rules */}
+
         <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700">
           <li>No tab switching during the exam.</li>
           <li>Do not refresh the browser.</li>
@@ -76,12 +70,12 @@ export default function InstructionsPage() {
           <li>Ensure stable internet connection.</li>
         </ul>
 
-        {/* Duration */}
+
         <div className="bg-slate-100 rounded-lg p-4 text-sm">
           <strong>Duration:</strong> {duration ?? "90"} minutes
         </div>
 
-        {/* Start Button */}
+
         <button
           onClick={handleStartExam}
           disabled={loading}
