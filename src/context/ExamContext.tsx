@@ -99,7 +99,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       setStudentId(sId)
       const data = await startExamApi(sId, examId)
       setSessionId(data.sessionId)
-      startTimer(data.durationSeconds)
+      startTimer(10) // DEBUG: 10 seconds for testing auto-submit
       // Reset state for new exam
       setAnswers(new Map())
       setCurrentPage(0)

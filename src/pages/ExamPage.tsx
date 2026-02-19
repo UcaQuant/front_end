@@ -51,6 +51,14 @@ export default function ExamPage() {
     }
   }
 
+  // Auto-submit when time is up
+  useEffect(() => {
+    if (timeLeft === 0 && sessionId) {
+      console.log("Time is up! Auto-submitting...")
+      handleSubmit()
+    }
+  }, [timeLeft, sessionId])
+
   if (isLoading && questions.length === 0) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
