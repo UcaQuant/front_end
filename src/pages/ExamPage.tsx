@@ -16,7 +16,6 @@ export default function ExamPage() {
     prevPage,
     loadQuestions,
     isLoading,
-    submitExam,
   } = useExam()
 
   // Initial load
@@ -91,8 +90,8 @@ export default function ExamPage() {
                       <label
                         key={optIdx}
                         className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all ${isSelected
-                            ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
-                            : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                          ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                          : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                           }`}
                       >
                         <input
