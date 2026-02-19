@@ -207,6 +207,11 @@ export async function finishExam(sessionId: string) {
   return res.data
 }
 
+export async function getExamSession(sessionId: string) {
+  const res = await api.get<StartExamResponse>(`/exams/${sessionId}`)
+  return res.data
+}
+
 export function getReportUrl(sessionId: string) {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
   return `${baseUrl}/reports/${sessionId}/download`

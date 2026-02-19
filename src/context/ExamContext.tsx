@@ -10,9 +10,11 @@ import {
 } from 'react'
 import {
   startExam as startExamApi,
+  getQuestions as getQuestionsApi,
   submitAnswers as submitAnswersApi,
   submitExam as submitExamApi,
   finishExam as finishExamApi,
+  getExamSession as getExamSessionApi,
   type QuestionDto,
 } from '../services/api'
 
@@ -62,7 +64,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     return new Map()
   })
 
-  const [timeLeft, setTimeLeft] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(-1) // -1 means loading/recovering
   const [isLoading, setIsLoading] = useState(false)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -92,6 +94,30 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     }, 1000)
   }, [])
 
+  // Session Recovery logic
+  useEffect(() => {
+    if (sessionId && timeLeft === -1) {
+      const recoverSession = async () => {
+        try {
+          const data = await getExamSessionApi(sessionId)
+          const startTime = new Date(data.startTime).getTime()
+          const now = Date.now()
+          const elapsed = Math.floor((now - startTime) / 1000)
+          const remaining = Math.max(0, data.durationSeconds - elapsed)
+          startTimer(remaining)
+        } catch (error) {
+          console.error("Failed to recover session:", error)
+          // If session is expired or invalid, clear it
+          setSessionId(null)
+          setTimeLeft(0)
+        }
+      }
+      recoverSession()
+    } else if (!sessionId && timeLeft === -1) {
+      setTimeLeft(0)
+    }
+  }, [sessionId, timeLeft, startTimer])
+
   // Start Exam
   const startExam = useCallback(async (sId: string, examId: number) => {
     setIsLoading(true)
@@ -99,7 +125,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
       setStudentId(sId)
       const data = await startExamApi(sId, examId)
       setSessionId(data.sessionId)
-      startTimer(10) // DEBUG: 10 seconds for testing auto-submit
+      startTimer(data.durationSeconds)
       // Reset state for new exam
       setAnswers(new Map())
       setCurrentPage(0)
@@ -117,14 +143,7 @@ export function ExamProvider({ children }: { children: ReactNode }) {
     if (!sessionId) return
     setIsLoading(true)
     try {
-      // We need to import getQuestions from api, but I missed exporting it in the import statement above? 
-      // No, I need to add it to the import.
-      // Wait, I can't modify the import inside this function. 
-      // I will use `import { getQuestions } ...` at top level. 
-      // For now, let's assume I fixed the imports in the replacement string.
-      const { getQuestions } = await import('../services/api')
-
-      const data = await getQuestions(sessionId, page, 5) // size 5 default
+      const data = await getQuestionsApi(sessionId, page, 5) // size 5 default
       setQuestions(data.questions)
       setTotalPages(data.totalPages)
       setCurrentPage(data.currentPage)
